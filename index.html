@@ -20,6 +20,47 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
         }).addTo(map);
+
+        var marker = L.marker([48.4284, -123.3656]).addTo(map);
+        marker.bindPopup("<b>Hello world!</b><br>I am a popup.").openPopup();
+
+
+    // Add a scale to the map
+    L.control.scale().addTo(map);
+
+// Add a custom legend to the map
+var legend = L.control({position: 'bottomright'});
+
+legend.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'info legend'),
+        grades = [0, 10, 20, 50, 100], // Example threshold values for different categories
+        labels = [],
+        from, to;
+
+    // Generate a label with a colored square for each interval
+    for (var i = 0; i < grades.length; i++) {
+        from = grades[i];
+        to = grades[i + 1];
+
+        labels.push(
+            '<i style="background:' + getColor(from + 1) + '"></i> ' +
+            from + (to ? '&ndash;' + to : '+'));
+    }
+
+    div.innerHTML = labels.join('<br>');
+    return div;
+};
+
+legend.addTo(map);
+
+// Function to determine legend color based on value
+function getColor(d) {
+    return d > 100 ? '#800026' :
+           d > 50  ? '#BD0026' :
+           d > 20  ? '#E31A1C' :
+           d > 10  ? '#FC4E2A' :
+           '#FFFFFF'; // Add a default color for values less than or equal to 10
+}
     </script>
 </body>
 </html>
