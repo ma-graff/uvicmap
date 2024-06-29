@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         #map {
-            height: 400px;
+            height: 100vh;
+            width: 100vw;
         }
     </style>
 </head>
@@ -28,27 +29,27 @@
     // Add a scale to the map
     L.control.scale().addTo(map);
 
-// Add a custom legend to the map
-var legend = L.control({position: 'bottomright'});
+    // Add a custom legend to the map
+    var legend = L.control({position: 'bottomright'});
 
-legend.onAdd = function (map) {
-    var div = L.DomUtil.create('div', 'info legend'),
-        grades = [0, 10, 20, 50, 100], // Example threshold values for different categories
-        labels = [],
-        from, to;
+    legend.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend'),
+            grades = [0, 10, 20, 50, 100], // Example threshold values for different categories
+            labels = [],
+            from, to;
 
-    // Generate a label with a colored square for each interval
-    for (var i = 0; i < grades.length; i++) {
-        from = grades[i];
-        to = grades[i + 1];
+        // Generate a label with a colored square for each interval
+        for (var i = 0; i < grades.length; i++) {
+            from = grades[i];
+            to = grades[i + 1];
 
-        labels.push(
-            '<i style="background:' + getColor(from + 1) + '"></i> ' +
-            from + (to ? '&ndash;' + to : '+'));
-    }
+            labels.push(
+                '<i style="background:' + getColor(from + 1) + '"></i> ' +
+                from + (to ? '&ndash;' + to : '+'));
+        }
 
-    div.innerHTML = labels.join('<br>');
-    return div;
+        div.innerHTML = labels.join('<br>');
+        return div;
 };
 
 legend.addTo(map);
