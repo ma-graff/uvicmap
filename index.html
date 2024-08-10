@@ -1,61 +1,162 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Leaflet.js Web Map</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <style>
-        #map { position: absolute; top: 0; bottom: 0; right: 0; left: 0;}
-    </style>
+  <title>University of Victoria 3D Buildings</title>
+  <meta property="og:description" content="Display 3D buildings at the University of Victoria, BC." />
+  <meta charset='utf-8'>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@4.5.1/dist/maplibre-gl.css' />
+  <script src='https://unpkg.com/maplibre-gl@4.5.1/dist/maplibre-gl.js'></script>
+  <style>
+      body { margin: 0; padding: 0; }
+      html, body, #map { height: 100%; }
+  </style>
 </head>
 <body>
-    <div id="map"></div>
+<div id="map"></div>
+<script>
+  const MAPTILER_KEY = 'get_your_own_OpIi9ZULNHzrESv6T2vL';
+  const BOUNDS = [
+      [-123.3350, 48.4480], // Southwest bound (near Cadboro Bay)
+      [-123.2940, 48.4780]  // Northeast bound (near Gordon Head)
+];
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://cdn.osmbuildings.org/classic/0.2.2b/OSMBuildings-Leaflet.js"></script>
-    <script>
+  const map = new maplibregl.Map({
+      style: `https://api.maptiler.com/maps/basic-v2/style.json?key=${MAPTILER_KEY}`,
+      center: [-123.31181, 48.4624],
+      zoom: 16.1,
+      opacity: 0.85,
+      pitch: 48,
+      bearing: -9.6,
+      container: 'map',
+      antialias: true,
+      maxBounds: BOUNDS,
+      minZoom: 15.5,
+      maxZoom: 18,
+  });
 
-        // Add your Leaflet.js code here
-        var map = L.map('map').setView([48.4284, -123.3656], 13);
+  // The 'building' layer in the streets vector source contains building-height
+  // data from OpenStreetMap.
+  map.on('load', () => {
+      // Insert the layer beneath any symbol layer.
 
-        map.setMaxBounds([
-            [48.4617, -123.3117],
-            [48.4637, -123.3077]
-        ]);
+      if (map.getLayer('Other border')) { 
+          map.removeLayer('Other border');
+      }
+    //   // 2. Add a mask to fade the area around UVic to a white void // cant get this to work // TODO: fade to white around border
+    //   map.addSource('fade-mask', {
+    //       'type': 'geojson',
+    //       'data': {
+    //           'type': 'FeatureCollection',
+    //           'features': [
+    //               {
+    //                   'type': 'Feature',
+    //                   'geometry': {
+    //                       'type': 'Point',
+    //                       'coordinates': UVIC_COORDINATES
+    //                   }
+    //               }
+    //           ]
+    //       }
+    //   });
 
-        map.setMinZoom(13);
+    //   map.addLayer({
+    //       'id': 'fade-mask',
+    //       'type': 'circle',
+    //       'source': 'fade-mask',
+    //       'paint': {
+    //           'circle-radius': [
+    //               'interpolate',
+    //               ['linear'],
+    //               ['zoom'],
+    //               10, RADIUS * 2, // Radius in meters for zoom level 10
+    //               16, RADIUS // Radius in meters for zoom level 16
+    //           ],
+    //           'circle-color': '#ffffff',
+    //           'circle-opacity': [
+    //               'interpolate',
+    //               ['linear'],
+    //               ['circle-radius'],
+    //               RADIUS, 0,
+    //               RADIUS * 2, 1
+    //           ]
+    //       }
+    //   });
 
-        var topo = L.tileLayer('https://api.maptiler.com/maps/topo-v2/{z}/{x}/{y}.png?key=cOv8kbJzDtWbeMj6viT6', {
-            maxZoom: 19, attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-                '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-                'Imagery © <a href="https://www.maptiler.com/">MapTiler</a>'
-        }).addTo(map);
+    //   // 3. Add a panning effect when the website is first opened
+    //   map.flyTo({
+    //       center: UVIC_COORDINATES,
+    //       zoom: 18,
+    //       speed: 0.5, // Lower speed for a smoother effect
+    //       curve: 1, // Control the smoothness of the curve (1 is default)
+    //       easing: t => t, // Easing function (linear by default)
+    //       essential: true
+    //   });
 
-        var Stadia_AlidadeSatellite = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.{ext}', {
-        minZoom: 0,
-        maxZoom: 20,
-        attribution: '&copy; CNES, Distribution Airbus DS, © Airbus DS, © PlanetObserver (Contains Copernicus Data) | &copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        ext: 'jpg'
-        });
-        // var marker = L.marker([48.4284, -123.3656]).addTo(map);
-        // marker.bindPopup("<b>Hello world!</b><br>I am a popup.").openPopup();
+      const layers = map.getStyle().layers;
+      let labelLayerId;
+      for (let i = 0; i < layers.length; i++) {
+        
 
-        // OSM Building Layer
-        var osmb = new OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
+          if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+              labelLayerId = layers[i].id;
+              break;
+          }
+      }
 
-        var basemaps = {
-            "Topographic": topo,
-            "Satellite": Stadia_AlidadeSatellite
-        };
+      map.addSource('openmaptiles', {
+          url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`,
+          type: 'vector',
+      });
 
-        var overlays = {
-            "OSM Buildings": osmb
-        };
+      map.addLayer( /// TODO: background sattelite layer
+          {
+              'id': 'Satellite',
+              'source': 'satellite-v2',
+              'source-layer': 'building',
+              'type': 'raster',
 
-        L.control.layers(basemaps, overlays).addTo(map);
-    // Add a scale to the map
-    L.control.scale().addTo(map);
+              'filter': ['!=', ['get', 'hide_3d'], true],
+                'paint': {
+                    'raster-opacity': 0.85
+                }
+          },
+          labelLayerId
+      );
 
-    </script>
+
+      map.addLayer(
+          {
+              'id': '3d-buildings',
+              'source': 'openmaptiles',
+              'source-layer': 'building',
+              'type': 'fill-extrusion',
+              'minzoom': 15,
+              'filter': ['!=', ['get', 'hide_3d'], true],
+              'paint': {
+                  'fill-extrusion-color': [
+                      'interpolate',
+                      ['linear'],
+                      ['get', 'render_height'], 0, 'lightgray', 200, 'royalblue', 400, 'lightblue'
+                  ],
+                  'fill-extrusion-height': [
+                      'interpolate',
+                      ['linear'],
+                      ['zoom'],
+                      15,
+                      0,
+                      16,
+                      ['get', 'render_height']
+                  ],
+                  'fill-extrusion-base': ['case',
+                      ['>=', ['get', 'zoom'], 16],
+                      ['get', 'render_min_height'], 0
+                  ]
+              }
+          },
+          labelLayerId
+      );
+  });
+</script>
 </body>
 </html>
