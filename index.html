@@ -15,14 +15,14 @@
 <body>
 <div id="map"></div>
 <script>
-  const MAPTILER_KEY = 'get_your_own_OpIi9ZULNHzrESv6T2vL';
+  const MAPTILER = 'cOv8kbJzDtWbeMj6viT6'; // I know this is public, but it's free ! :)
   const BOUNDS = [
       [-123.3350, 48.4480], // Southwest bound (near Cadboro Bay)
       [-123.2940, 48.4780]  // Northeast bound (near Gordon Head)
 ];
 
   const map = new maplibregl.Map({
-      style: `https://api.maptiler.com/maps/basic-v2/style.json?key=${MAPTILER_KEY}`,
+      style: `https://api.maptiler.com/maps/basic-v2/style.json?key=${MAPTILER}`,
       center: [-123.31181, 48.4624],
       zoom: 16.1,
       opacity: 0.85,
@@ -35,20 +35,34 @@
       maxZoom: 18,
   });
 
+  let isRotating = true;
+
+function rotateCamera(timestamp) {
+    if (isRotating) {
+        map.rotateTo((timestamp / 250) % 360, {duration: 0});
+        requestAnimationFrame(rotateCamera);
+    }
+}
+
+function stopRotation() {
+    isRotating = false;
+}
+
+
   map.on('load', () => {
       // Insert the layer beneath any symbol layer.
 
       if (map.getLayer('Other border')) { 
           map.removeLayer('Other border');
       }
-
+      rotateCamera(0);
       map.addLayer({
           'id': 'satellite',
           'type': 'raster',
           'source': {
               'type': 'raster',
               'tiles': [
-                  `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${MAPTILER_KEY}`
+                  `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${MAPTILER}`
               ],
               'tileSize': 256
           },
@@ -58,7 +72,7 @@
       });
 
       map.addSource('openmaptiles', {
-          url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`,
+          url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER}`,
           type: 'vector',
       });
 
@@ -107,6 +121,13 @@
     );
 
   });
+
+  // Stop camera rotation on user interaction
+  map.on('mousedown', stopRotation);
+  map.on('wheel', stopRotation);
+  map.on('touchstart', stopRotation);
+  map.on('dragstart', stopRotation);
+
 </script>
 </body>
 </html>
